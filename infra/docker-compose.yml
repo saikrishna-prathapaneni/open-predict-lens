@@ -10,7 +10,7 @@ services:
       - ../backend/src:/app/src
     depends_on:
       surrealdb:
-        condition: service_healthy
+       condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
@@ -45,19 +45,20 @@ services:
 
   surrealdb:
     image: surrealdb/surrealdb:latest
+    user: root
     command: start --user root --pass root --log info rocksdb:/data/trading.db
     ports:
-      - "8001:8000"   # host 8001 to avoid conflict with other services on 8000
+      - "8000:8000"
     volumes:
-      - surrealdb-data:/data
+      - openpredict-surrealdb-data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "surreal", "isready", "-e", "http://localhost:8000"]
-      interval: 5s
+      test: ["CMD", "/surreal", "isready"]
+      interval: 10s
       timeout: 5s
       retries: 10
       start_period: 5s
 
 volumes:
-  surrealdb-data:
+  openpredict-surrealdb-data:
   frontend_node_modules:

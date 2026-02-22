@@ -1,7 +1,10 @@
 """SurrealDB connection and lifecycle."""
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
+from fastapi import FastAPI
 from surrealdb import AsyncSurreal
 
 from app.config import settings
@@ -41,7 +44,7 @@ async def close_surreal() -> None:
 
 
 @asynccontextmanager
-async def surreal_lifespan() -> AsyncGenerator[None, None]:
+async def surreal_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Lifespan context: set global client on startup, clear on shutdown."""
     global _db
     _db = await connect_surreal()
