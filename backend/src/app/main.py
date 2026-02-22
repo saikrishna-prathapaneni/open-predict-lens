@@ -3,10 +3,12 @@ from httpx import AsyncClient
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
+from app.db import surreal_lifespan
 from app.services.kalshi_client import fetch_market
 from app.services.kalshi_client import list_markets
 
-app = FastAPI()
+app = FastAPI(title=settings.app_name, lifespan=surreal_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -51,4 +53,10 @@ async def list_markets_endpoint(limit: int = 100):
 
 @app.get("/health")
 async def health_check():
+    from app.db import get_db
+    try:
+        await get_db().query("RETURN 1")
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail=f"SurrealDB unhealthy: {e}")
     return {"status": "ok"}

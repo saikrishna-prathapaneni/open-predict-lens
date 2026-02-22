@@ -9,7 +9,7 @@ services:
     volumes:
       - ../backend/src:/app/src
     depends_on:
-      db:
+      surrealdb:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -43,22 +43,21 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  db:
-    image: postgres:16
-    env_file:
-      - ./env/db.env
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    command: start --user root --pass root --log info rocksdb:/data/trading.db
     ports:
-      - "5432:5432"
+      - "8000:8000"
     volumes:
-      - db-data:/var/lib/postgresql/data
+      - surrealdb-data:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      test: ["CMD", "surreal", "isready", "-e", "http://localhost:8000"]
+      interval: 5s
       timeout: 5s
-      retries: 5
-      start_period: 10s
+      retries: 10
+      start_period: 5s
 
 volumes:
-  db-data:
+  surrealdb-data:
   frontend_node_modules:
