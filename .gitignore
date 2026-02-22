@@ -1,0 +1,13 @@
+__pycache__/
+**/__pycache__/
+.venv/
+.env
+.env.*
+node_modules/
+.next/
+dist/
+.DS_Store
+*.log
+infra/env/*.env
+uv.lock
+pnpm-lock.yaml
