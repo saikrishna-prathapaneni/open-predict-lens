@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     surreal_ns: str = "trading"
     surreal_db: str = "trading"
     api_key: str = "changeme"
-
+    # LLM configuration
+    llm_provider: str = "ollama"
+    # Ollama / LiteLLM
+    ollama_url: str = "http://localhost:11434/v1"
+    
 
 settings = Settings()

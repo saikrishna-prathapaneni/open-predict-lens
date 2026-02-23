@@ -11,3 +11,5 @@ dist/
 infra/env/*.env
 uv.lock
 pnpm-lock.yaml
+.github/
+.git/
