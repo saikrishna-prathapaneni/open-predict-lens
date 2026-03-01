@@ -9,6 +9,7 @@ from pydantic_ai import Agent, AgentRunResult, Tool
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.litellm import LiteLLMProvider
 from app.config import settings
+from app.prompts.system import get_system_prompt
 
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class OllamaClient(BaseLLMClient):
         self, 
         prompt: str, 
         tools: Optional[List[Tool]] = None, 
-        system_prompt: str = "You are a helpful financial assistant.",
+        system_prompt: Optional[str] = None,
         **kwargs: Any
     ) -> Dict[str, Any]:
         """
@@ -52,10 +53,11 @@ class OllamaClient(BaseLLMClient):
         Uses an Agent for both simple text and tool-calling for consistency.
         """
         try:
+            _system_prompt = system_prompt or get_system_prompt()
             agent = Agent(
                 model=self.model,
                 tools=tools or [],
-                system_prompt=system_prompt
+                system_prompt=_system_prompt
             )
             result: AgentRunResult = await agent.run(prompt)
             return {
@@ -80,7 +82,7 @@ class OpenRouterClient(BaseLLMClient):
         self, 
         prompt: str, 
         tools: Optional[List[Tool]] = None, 
-        system_prompt: str = "You are a helpful financial assistant.",
+        system_prompt: Optional[str] = None,
         **kwargs: Any
     ) -> Dict[str, Any]:
         """
@@ -88,10 +90,11 @@ class OpenRouterClient(BaseLLMClient):
         Uses an Agent for both simple text and tool-calling for consistency.
         """
         try:
+            _system_prompt = system_prompt or get_system_prompt()
             agent = Agent(
                 model=self.model,
                 tools=tools or [],
-                system_prompt=system_prompt
+                system_prompt=_system_prompt
             )
             result: AgentRunResult = await agent.run(prompt)
             return {
