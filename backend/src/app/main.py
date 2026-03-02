@@ -1,19 +1,45 @@
 import asyncio
 from httpx import AsyncClient
 from typing import Optional
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.tools.web_search import duckduckgo_search_tool
 from app.core.tools.cal import calculate
 
 from app.config import settings
-from app.db import surreal_lifespan
+from app.db import surreal_lifespan, get_db
+from app.core.init_db import init_db
+from app.core.tasks import sync_markets_loop
+
 from app.services.kalshi_client import fetch_market, list_markets
 from app.services.kalshi_client import list_series, get_series
-
 from app.core.llm import get_llm_client
 
-app = FastAPI(title=settings.app_name, lifespan=surreal_lifespan)
+@asynccontextmanager
+async def app_lifespan(app: FastAPI):
+    # Initialize DB connection via context manager
+    async with surreal_lifespan(app):
+        db = get_db()
+        
+        # 1. Run migrations / Check & Seed empty database
+        await init_db(db)
+        
+        # 2. Start asynchronous background sync loop
+        sync_task = asyncio.create_task(sync_markets_loop(db, interval_seconds=120))
+        
+        try:
+            yield
+        finally:
+            # 3. Clean up tasks on shutdown
+            sync_task.cancel()
+            try:
+                await sync_task
+            except asyncio.CancelledError:
+                pass
+
+
+app = FastAPI(title=settings.app_name, lifespan=app_lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -91,14 +117,20 @@ async def analyze_bet(ticker: str):
         except Exception as e:
             from fastapi import HTTPException
             raise HTTPException(status_code=500, detail=str(e))
-        
-
 
 
 @app.get("/markets")
 async def list_markets_endpoint(limit: int = 100):
-    markets = await list_markets(limit)
-    return {"markets": markets}
+    from app.db import get_db
+    db = get_db()
+    try:
+        # Get markets from DB
+        result = await db.query(f"SELECT * FROM market LIMIT {limit}")
+        markets = result[0].get("result", [])
+        return {"markets": markets}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/health")
 async def health_check():

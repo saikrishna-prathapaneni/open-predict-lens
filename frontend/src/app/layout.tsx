@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kalshi Trading Dashboard",
-  description: "Visualise and analyse Kalshi prediction markets in real time.",
+  title: "OpenPredictLens",
+  description: "Market Intelligence for Prediction Markets.",
 };
 
 export default function RootLayout({
