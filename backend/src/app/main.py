@@ -1,6 +1,8 @@
 import asyncio
-from httpx import AsyncClient
+import logging
+import traceback
 from typing import Optional
+from httpx import AsyncClient
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +17,9 @@ from app.core.tasks import sync_markets_loop
 from app.services.kalshi_client import fetch_market, list_markets
 from app.services.kalshi_client import list_series, get_series
 from app.core.llm import get_llm_client
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def app_lifespan(app: FastAPI):
@@ -122,13 +127,16 @@ async def analyze_bet(ticker: str):
 @app.get("/markets")
 async def list_markets_endpoint(limit: int = 100):
     from app.db import get_db
+    
     db = get_db()
     try:
-        # Get markets from DB
         result = await db.query(f"SELECT * FROM market LIMIT {limit}")
-        markets = result[0].get("result", [])
-        return {"markets": markets}
+        for market in result:
+            if "id" in market:
+                market["id"] = str(market["id"])
+        return {"markets": result}
     except Exception as e:
+        logger.error(traceback.format_exc())
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
 

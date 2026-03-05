@@ -8,10 +8,19 @@ async def seed_markets(db: AsyncSurreal):
     
     try:
         # Check if we already have markets
-        result = await db.query("SELECT count() FROM market GROUP ALL;")
-        count_result = result[0].get("result", [])
+        result = await db.query("SELECT * FROM market LIMIT 1;")
         
-        if count_result and len(count_result) > 0 and count_result[0].get("count", 0) > 0:
+        has_markets = False
+        if isinstance(result, list) and result:
+            first_item = result[0]
+            if isinstance(first_item, list):
+                has_markets = bool(first_item)
+            elif isinstance(first_item, dict) and "result" in first_item:
+                has_markets = bool(first_item.get("result"))
+            else:
+                has_markets = True
+
+        if has_markets:
             logger.info("Database already seeded with markets.")
             return
 
@@ -82,10 +91,13 @@ async def seed_markets(db: AsyncSurreal):
         for market in markets:
             try:
                 market_id = market.pop("id")
-                await db.query("CREATE type::record('market', $id) CONTENT $data", {
-                    "id": market_id,
-                    "data": market
-                })
+                await db.query(
+                    "CREATE type::record('market', $id) CONTENT $data",
+                    {
+                        "id": market_id,
+                        "data": market,
+                    }
+                )
                 logger.info(f"Created market: {market['ticker']}")
             except Exception as e:
                 logger.error(f"Failed to create market {market['ticker']}: {e}")
