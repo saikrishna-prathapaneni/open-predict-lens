@@ -1,6 +1,10 @@
 """App settings loaded from environment (backend.env or .env)."""
+
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+
 
 
 class KalshiSettings(BaseModel):
@@ -10,6 +14,7 @@ class KalshiSettings(BaseModel):
     markets_url: str = "https://api.elections.kalshi.com/trade-api/v2/markets"
     series_url: str = "https://api.elections.kalshi.com/trade-api/v2/series"
     timeout: float = 10.0
+
 
 class PolymarketSettings(BaseModel):
     """Polymarket API configuration."""

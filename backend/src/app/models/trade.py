@@ -1,5 +1,7 @@
 # Trade records are stored in SurrealDB table `trade`.
 # Use app.db.get_db() and db.query() / db.select("trade") to read/write.
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 class Trade(BaseModel):
@@ -24,3 +26,14 @@ class Series(BaseModel):
 class KalshiSeries(Series):
     ticker: str
  
+
+class Event(BaseModel):
+    """Defines the format for events in the system."""
+    series_id : str
+    date : datetime
+    
+    @property
+    def to_event(self):
+        """Converts the series_id and date into a standardized event string format."""
+        # "KXHIGHNY-25MAR08"
+        return f"{self.series_id}-{self.date.strftime('%d%b%y').upper()}"

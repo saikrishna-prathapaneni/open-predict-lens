@@ -14,7 +14,7 @@ from app.db import surreal_lifespan, get_db
 from app.core.init_db import init_db
 from app.core.tasks import sync_markets_loop
 
-from app.services.kalshi_client import fetch_market, list_markets
+from app.services.kalshi_client import fetch_market
 from app.services.kalshi_client import list_series, get_series
 from app.core.llm import get_llm_client
 
@@ -26,17 +26,11 @@ async def app_lifespan(app: FastAPI):
     # Initialize DB connection via context manager
     async with surreal_lifespan(app):
         db = get_db()
-        
-        # 1. Run migrations / Check & Seed empty database
         await init_db(db)
-        
-        # 2. Start asynchronous background sync loop
         sync_task = asyncio.create_task(sync_markets_loop(db, interval_seconds=120))
-        
         try:
             yield
         finally:
-            # 3. Clean up tasks on shutdown
             sync_task.cancel()
             try:
                 await sync_task

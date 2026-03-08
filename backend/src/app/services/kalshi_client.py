@@ -2,6 +2,7 @@ import httpx
 from typing import Optional, Dict, Any, List
 
 from app.config import settings
+from app.models.trade import Event
 
 _kalshi = settings.kalshi
 
@@ -14,6 +15,26 @@ async def fetch_market(ticker: str) -> dict:
         resp.raise_for_status()
         return resp.json().get("market", {})
     
+async def fetch_market_ticker(ticker: str) -> dict:
+    """Fetch market data for a given series ticker from Kalshi API."""
+    async with httpx.AsyncClient(timeout=_kalshi.timeout) as client:
+        resp = await client.get(
+            f"{_kalshi.markets_url}?series_ticker={ticker}"
+        )
+        resp.raise_for_status()
+        return resp.json().get("markets", [])
+
+
+async def fetch_event(event: Event) -> dict:
+    """Fetch event data for a given event ID from Kalshi API."""
+    async with httpx.AsyncClient(timeout=_kalshi.timeout) as client:
+        resp = await client.get(
+            f"{_kalshi.base_url}/events/{event.to_event}"
+        )
+        resp.raise_for_status()
+        return resp.json().get("event", {})
+
+
 async def list_markets(limit: int = 10) -> list:
     """List all available markets from Kalshi API."""
     async with httpx.AsyncClient(timeout=_kalshi.timeout) as client:
