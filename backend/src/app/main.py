@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import traceback
+import datetime
 from typing import Optional
 from httpx import AsyncClient
 from contextlib import asynccontextmanager
@@ -9,12 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.tools.web_search import duckduckgo_search_tool
 from app.core.tools.cal import calculate
 
+from app.models.trade import Event
 from app.config import settings
 from app.db import surreal_lifespan, get_db
 from app.core.init_db import init_db
 from app.core.tasks import sync_markets_loop
 
-from app.services.kalshi_client import fetch_market
+from app.services.kalshi_client import fetch_market, fetch_event
 from app.services.kalshi_client import list_series, get_series
 from app.core.llm import get_llm_client
 
@@ -67,6 +69,11 @@ async def list_series_endpoint(
 ):
     series_list = await list_series(limit=limit, status=status, category=category)
     return {"series": series_list}
+
+@app.get("/today_events/{ticker}")
+async def get_latest_event_endpoint(ticker: str):
+    event = await fetch_event(Event(series_id=ticker, date=datetime.datetime.now()))
+    return {"event": event}
 
 @app.get("/analyze/series/{series_ticker}")
 async def analyze_series(series_ticker: str):

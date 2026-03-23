@@ -30,10 +30,10 @@ class KalshiSeries(Series):
 class Event(BaseModel):
     """Defines the format for events in the system."""
     series_id : str
-    date : datetime
+    date : datetime = Field(..., description="The date of the event in YYYY-MM-DD format")
     
     @property
     def to_event(self):
         """Converts the series_id and date into a standardized event string format."""
         # "KXHIGHNY-25MAR08"
-        return f"{self.series_id}-{self.date.strftime('%d%b%y').upper()}"
+        return f"{self.series_id}-{self.date.strftime('%y%b%d').upper()}"
